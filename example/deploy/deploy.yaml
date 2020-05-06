@@ -1,18 +1,3 @@
-apiVersion: v1
-kind: Service
-metadata:
-  name: example
-  namespace: logging
-  labels:
-    app: example
-spec:
-  ports:
-  - port: 24224
-    protocol: TCP
-  selector:
-    app: example
-  type: NodePort
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -32,13 +17,14 @@ spec:
     spec:
       containers:
       - name: example
-        image: logging:latest
+        image: zhulinwei/logging:latest
         resources:
           limits:
-            memory: 500Mi
-          requests:
             cpu: 100m
             memory: 200Mi
+          requests:
+            cpu: 10m
+            memory: 20Mi
         ports:
         - containerPort: 24224
       terminationGracePeriodSeconds: 30
