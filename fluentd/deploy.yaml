@@ -1,0 +1,69 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: fluentd
+  namespace: logging
+  labels:
+    app: fluentd
+spec:
+  ports:
+  - name: http
+    port: 9880
+    protocol: TCP
+  - name: forword
+    port: 24224
+    protocol: TCP
+  selector:
+    app: fluentd
+  type: NodePort
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fluentd
+  namespace: logging
+  labels:
+    app: fluentd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fluentd
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: fluentd
+    spec:
+      containers:
+      - name: fluentd
+        image: ghgt/fluentd-es-s3-rewrite:v1.7.3-alpine-es7-s3-rewrite-1.1
+        env:
+        - name: FLUENTD_ARGS
+          value: --no-supervisor -q
+        resources:
+          limits:
+            memory: 500Mi
+          requests:
+            cpu: 100m
+            memory: 200Mi
+        ports:
+        - containerPort: 8080
+        - containerPort: 24224
+        volumeMounts:
+        - name: varlog
+          mountPath: /var/log
+        - name: config-volume
+          mountPath: /fluentd/etc
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: varlog
+        hostPath:
+          path: /var/log
+      - name: config-volume
+        configMap:
+          name: fluentd-config
