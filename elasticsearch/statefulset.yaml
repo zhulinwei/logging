@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: elasticsearch
+  namespace: logging
+  labels:
+    k8s-app: elasticsearch-logging
+spec:
+  serviceName: elasticsearch
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: elasticsearch
+  template:
+    metadata:
+      labels:
+        k8s-app: elasticsearch
+    spec:
+      # serviceAccountName: elasticsearch-logging
+      containers:
+        # - image: quay.io/fluentd_elasticsearch/elasticsearch:v7.2.0
+      - image: docker.elastic.co/elasticsearch/elasticsearch:6.6.2
+        name: elasticsearch
+        imagePullPolicy: Always
+        resources:
+          # need more cpu upon initialization, therefore burstable class
+          limits:
+            cpu: 1000m
+          requests:
+            cpu: 100m
+        ports:
+        - containerPort: 9200
+          name: db
+          protocol: TCP
+        volumeMounts:
+        - name: elasticsearch-volumes
+          mountPath: /data
+        env:
+        - name: discovery.type
+          value: single-node
+        - name: ES_JAVA_OPTS
+          value: "-Xms512m -Xmx512m"
+      volumes:
+      - name: elasticsearch-volumes
+        emptyDir: {}
