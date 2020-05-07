@@ -1,12 +1,12 @@
-FROM node:12
-
-# Create app directory
-WORKDIR /usr/src/app
-
-# Install app dependencies
-# A wildcard is used to ensure both package.json AND package-lock.json are copied
-# where available (npm@5+)
+# build stage
+FROM golang:latest as builder
+LABEL stage=gobuilder
+WORKDIR /build
 COPY . .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o example
 
-EXPOSE 3000
-CMD [ "node", "app.js" ]
+# final stage
+FROM scratch
+COPY --from=builder /build/example /
+EXPOSE 8080
+ENTRYPOINT ["/example"]
